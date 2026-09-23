@@ -1,0 +1,55 @@
+#hps_php_html
+#<IfModule mod_rewrite.c>
+#Options +FollowSymLinks
+#RewriteEngine on
+#RewriteBase /
+#RewriteCond %{REQUEST_FILENAME} !-d
+#RewriteCond %{REQUEST_FILENAME}.html-f
+#RewriteRule ^(.*)$ $1.html
+#</IfModule>
+
+#<IfModule mod_rewrite.c>
+#Options +FollowSymLinks
+#RewriteEngine on
+#RewriteBase /
+#RewriteCond %{REQUEST_FILENAME} !-d
+#RewriteCond %{REQUEST_FILENAME}.php -f
+#RewriteRule ^(.*)$ $1.php
+#RewriteRule ^([a-z]+)\/?$ $1.php [NC]
+#</IfModule>
+
+<IfModule mod_rewrite.c>
+Options +FollowSymLinks
+RewriteEngine on
+#RewriteBase /
+
+#Redirect Trailing Slashes If Not A Folder...
+#RewriteCond %{REQUEST_FILENAME} !-d
+#RewriteCond %{REQUEST_URI} (.+)/$
+#RewriteRule ^ %1 [L,R=301]
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.*)$ $1.php
+
+#RewriteRule ^index\.php$ - [L] 
+#RewriteRule ^(.*)$ /index.php?/$1 [L]
+#RewriteRule ^ index.php [L]
+
+#index_folder(v)
+Options -Indexes
+
+#blok_akses_htaccess(v)
+RewriteCond %{SCRIPT_FILENAME} -d [OR] 
+RewriteCond %{SCRIPT_FILENAME} -f 
+RewriteRule "(^|/)\." - [F]
+
+#direc_errror(v)
+ErrorDocument 404 http://192.168.0.22/GIS
+ErrorDocument 400 http://192.168.0.22/GIS
+ErrorDocument 401 http://192.168.0.22/GIS
+ErrorDocument 403 http://192.168.0.22/GIS
+ErrorDocument 404 http://192.168.0.22/GIS
+ErrorDocument 500 http://192.168.0.22/GIS
+</IfModule>

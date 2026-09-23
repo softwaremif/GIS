@@ -1,0 +1,11 @@
+# Berkas unggahan & aset yang dihasilkan aplikasi — bukan kode sumber.
+upload/
+pdf/
+foto/
+Traceability/
+media/
+excel/
+
+# Dependensi & paket pihak ketiga
+config/vendor/
+*.zip
