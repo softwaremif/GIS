@@ -7,6 +7,7 @@ include "../config/koneksi11u.php";
 include "../config/koneksi103a.php";
 include "../config/tanggal2.php";
 include "../config/ip.php";
+include "../config/log_bdown.php";
 
 $ip = ip();
 $browser = browser();
@@ -95,6 +96,10 @@ if ($_GET['x'] == "qty") {
     $stsprod = $dto['stsprod'];
 
     $updt = mysqli_query($koneksi, "update ord set dateupdate=NOW() where ordpk='$ordpk'");
+
+    // Rekam PCD / Ex-Factory / total qty sebelum diubah, untuk dibandingkan
+    // sesudahnya. Lihat config/log_bdown.php.
+    $bdownSebelum = bdown_snapshot($koneksi, $ordpk, $bdownpk);
 
     $sql = "update bdown set
         country='$country2',
@@ -482,6 +487,9 @@ if ($_GET['x'] == "qty") {
         ordpk='$dt3[ordpk]',
         bdownpk='$bdownpk',
         sistem='$sistem'");
+
+    log_bdown_penting($koneksi, $ordpk, $bdownpk, $bdownSebelum, $userlog, $ip, $sistem);
+
     if ($stsprod == 1) {
         echo json_encode(array('success' => true, 'msg' => "<div class='text-infohijau' style='width:375px;'>Perubahan data diteruskan ke produksi &nbsp; &#10004; </div>"));
     } else {
@@ -559,6 +567,9 @@ if ($_GET['x'] == "replaceqty") {
 if ($_GET['x'] == "qty2") {
     $fu = $_SESSION['fu'];
     $ordpk = $_GET['ord'];
+
+    // Tambah baris PO mengubah total qty order — direkam untuk notifikasi schedule.
+    $totalSebelum = bdown_total_order($koneksi, $ordpk);
     $country = addslashes($_REQUEST['country']);
     $poref = $_REQUEST['poref'];
     $po = $_REQUEST['pono'];
@@ -952,6 +963,8 @@ if ($_GET['x'] == "qty2") {
                 lognote='$lognote',
                 ordpk='$ordpk',
                 sistem='$sistem'");
+
+    log_bdown_total($koneksi, $ordpk, 0, $totalSebelum, $userlog, $ip, $sistem);
     // echo json_encode(array('success' => true, 'msg' => "<div class='text-infohijau' style='width:285px;'>1 Row order breakdown added &nbsp; &#10004; </div>"));
     if ($stsprod == 1) {
         echo json_encode(array('success' => true, 'msg' => "<div class='text-infohijau' style='width:375px;'>Perubahan data diteruskan ke produksi &nbsp; &#10004; </div>"));
