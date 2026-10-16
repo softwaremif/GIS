@@ -1961,7 +1961,7 @@ if($perrkb1>0){
 <?php echo $perrkb; ?>
 </a>
 <?php } else { ?>
-<span style="color:#00000061;font-weight:400;">N/A</span>
+<span style="color:#00000061;font-weight:400;">N/A <?php echo $perrkb; ?></span>
 <?php }
 } else { ?>
 <span style="color:#00000061;font-weight:400;">N/A</span>
@@ -2157,7 +2157,7 @@ style="padding:8px;border-radius:5px;border:1px solid #D6D6D6;background-color:#
 <div id="delsts" style="<?php echo $styledel; ?>"><?php echo $dt3['tdelsts']; ?>&nbsp;item delete from PO</div>
 <?php } ?>
   <table id="dg" class="easyui-datagrid" title="" style="width:100%;height:auto;" align="center" 
-  url="view/get_detpomd.php?po=<?php echo $po; ?>" idField="rkbpk" toolbar="#tb" striped="true" pagination="false" 
+  url="view/get_detpo.php?po=<?php echo $po; ?>" idField="rkbpk" toolbar="#tb" striped="true" pagination="false" 
   singleSelected="true" rownumbers="false" collapsible="true" method="post" multiSort="true"
   data-options="
     rowStyler:function(index,row){
@@ -2183,10 +2183,8 @@ style="padding:8px;border-radius:5px;border:1px solid #D6D6D6;background-color:#
         <th field="rev" width="85" sortable="false">Subject</th>
         <th field="ordno" width="90" sortable="true">Order no</th>
         <!--<th field="spec" width="150" sortable="true" editor="text">Specification</th>-->
-        <th sortable="true" data-options="field:'item',width:170,
-editor:{type:'textbox',options:{multiline:true,height:100}}">Item</th>
-        <th sortable="true" data-options="field:'spec',width:170,
-editor:{type:'textbox',options:{multiline:true,height:100}}">Specification</th>
+        <th sortable="true" data-options="field:'item',width:170">Item</th>
+        <th sortable="true" data-options="field:'spec',width:170">Specification</th>
         <?php if ($tspec == 2) { ?>
           <?php if ($hspec1 <> "") { ?><th field="spec1" width="80" sortable="true"><?php echo $hspec1; ?></th>
           <?php }
@@ -2208,18 +2206,16 @@ editor:{type:'textbox',options:{multiline:true,height:100}}">Specification</th>
         <th field="colname" width="90" sortable="true">Color</th>
         <th field="colcode" width="90" sortable="true">Col code</th>
         <th field="sizegar" width="90" sortable="true">Size</th>
-        <th data-options="field:'unit',width:84,
-editor:{type:'combobox',options:{valueField:'unita',textField:'unita',limitToList: true, reversed: true,
-url:'view/get_data.php?dt=piunit'}}">Units</th>
-<th field="rpocons" width="90" sortable="true">RKB Qty</th>
-<th field="rqrs" width="90" sortable="true">RKB PPS</th>
-<th field="rprice" width="90" sortable="true">RKB price</th>
-<th field="rtotal" width="90" sortable="true">RKB Total</th>
-<th field="unitcnv" width="84" sortable="true">PO unit</th>
-<th field="pocons" width="90" sortable="true">PO qty</th>
-<th field="qrs" width="90" sortable="true">PO PPS</th>
-<th field="price" width="90" sortable="true">PO price</th>
-<th field="total" width="90" sortable="true">PI Total</th>
+        <th data-options="field:'unit',width:84">Units</th>
+        <th field="rpocons" width="90" sortable="true">RKB Qty</th>
+        <th field="rqrs" width="90" sortable="true">RKB PPS</th>
+        <th field="rprice" width="90" sortable="true">RKB price</th>
+        <th field="rtotal" width="90" sortable="true">RKB Total</th>
+        <th field="unitcnv" width="84" sortable="true">PO units</th>
+        <th field="pocons" width="90" sortable="true">PO qty</th>
+        <th field="qrs" width="90" sortable="true">PO PPS</th>
+        <th field="price" width="90" sortable="true">PO price</th>
+        <th field="total" width="90" sortable="true">PI Total</th>
         <!--<th field="piqty" width="90" sortable="true">PI qty</th>-->
         <!--<th data-options="field:'piunit'">Units</th>-->
         <!--<th field="piprice2" width="90" sortable="true">PI price</th>-->

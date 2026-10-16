@@ -6,6 +6,7 @@ include "../config/koneksi11a.php";
 include "../config/koneksi103a.php";
 require "../config/vendor/autoload.php";
 include "../config/ip.php";
+include "../config/tanggal_excel.php";
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Reader\Csv;
@@ -48,6 +49,15 @@ if (isset($_FILES['uploadfile']['name']) && in_array($_FILES['uploadfile']['type
         $reader->setReadDataOnly(true);
         $spreadsheet = $reader->load($_FILES['uploadfile']['tmp_name']);
         $sheetData = $spreadsheet->getActiveSheet()->toArray();
+
+        // Validasi tahun PCD / Ex Factory sebelum data lama dihapus (type 2).
+        $errTahun = validasi_tahun_upload($sheetData, 2, [9 => 'PCD', 10 => 'Ex Factory'], function ($baris) {
+                return trim((string) ($baris[0] ?? '')) !== 'DETAIL';
+        });
+        if ($errTahun !== null) {
+                echo $errTahun;
+                exit;
+        }
 
         if ($ordpk == "") {
                 $ordno_tmp = $sheetData[2][4]; // kolom ordno di excel
@@ -110,8 +120,15 @@ if($cekdata['fupk'] == $fu){
                 $data7 = $sheetData[$i]['6'];
                 $data8 = $sheetData[$i]['7'];
                 $ddp   = $sheetData[$i]['8'];
-                $pcd   = $sheetData[$i]['9'];
-                $data9 = $sheetData[$i]['10'];
+                /* Serial Excel -> Y-m-d. Lihat config/tanggal_excel.php.
+                   Dua bentuk dipakai: $pcd/$data9 untuk kolom varchar `GAC` di
+                   tabel po andon (dipakai dengan kutip), dan $pcdSql/$gacSql
+                   untuk kolom DATE di bdown (dipakai TANPA kutip supaya sel
+                   kosong tersimpan NULL, bukan '0000-00-00'). */
+                $pcd    = excel_ke_tanggal($sheetData[$i]['9']) ?? '';
+                $data9  = excel_ke_tanggal($sheetData[$i]['10']) ?? '';
+                $pcdSql = tanggal_sql($sheetData[$i]['9']);
+                $gacSql = tanggal_sql($sheetData[$i]['10']);
                 $secsz = $sheetData[$i]['11'];
                 $data10 = $sheetData[$i]['12'];
                 $data11 = $sheetData[$i]['13'];
@@ -273,9 +290,9 @@ if($cekdata['fupk'] == $fu){
                                         style='$style',
                                         color='$color',
                                         FOB='$data8',
-                                        gac='$data9',
+                                        gac=$gacSql,
                                         DDP='$ddp',
-                                        pcd='$pcd',
+                                        pcd=$pcdSql,
                                         secsz='$secsz',
                                         s1='$data10',
                                         s2='$data11',

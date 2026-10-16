@@ -14,10 +14,10 @@ $ordpk = isset($_GET['ordpk']) ? ($_GET['ordpk']) : false;
 
 $offset = ($page - 1) * $rows;
 
-$rs = mysqli_query($koneksi,"select * from logtran where ordpk='$ordpk' and lognote like '%qty%' group by logdtime ORDER BY $sort $order");
+$rs = mysqli_query($koneksi, "SELECT * FROM logtran WHERE ordpk='$ordpk' AND bdownpk IS NOT NULL AND bdownpk <> '' ORDER BY $sort $order");
 
 $result = array();
-$result['total'] = mysqli_num_rows(mysqli_query($koneksi,"select * from logtran where ordpk='$ordpk' and lognote like '%qty%' group by logdtime"));
+$result['total'] = mysqli_num_rows(mysqli_query($koneksi, "SELECT * FROM logtran WHERE ordpk='$ordpk' AND bdownpk IS NOT NULL AND bdownpk <> ''"));
 $row = array();
 $k = $offset;
 while ($data = mysqli_fetch_array($rs)) {

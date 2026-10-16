@@ -4013,7 +4013,8 @@ rownumbers="false"  multiple="true" collapsible="false" fitColumns="false" metho
 						required="true" data-options="prompt:'Stage Order',panelHeight:'auto',editable:false,
 				data: [
 				{value:'Salesman',text:'Salesman'},
-				{value:'Bulk Order',text:'Bulk Order'}
+				{value:'Bulk Order',text:'Bulk Order'},
+				{value:'CMT',text:'CMT'}
 				]">
 				</div>
 
@@ -4261,7 +4262,8 @@ rownumbers="false"  multiple="true" collapsible="false" fitColumns="false" metho
 						required="true" data-options="prompt:'Stage Order',panelHeight:'auto',editable:false,
 				data: [
 				{value:'Salesman',text:'Salesman'},
-				{value:'Bulk Order',text:'Bulk Order'}
+				{value:'Bulk Order',text:'Bulk Order'},
+				{value:'CMT',text:'CMT'}
 				]">
 				</div>
 

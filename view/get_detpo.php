@@ -165,11 +165,10 @@ else { $piunit1=$data['unit']; }*/
         }
     } else {
         $unit = $data['unit'];
+        $unitpo = $data['unit'];
         if ($uom == 1) {
-            $unitpo = $data['unit'];
             $qrs1 = $data['qrs'];
         } else {
-            $unitpo = $data['unit2'];
             $qrs1 = $data['qrs2'];
         }
         // $price = $price;

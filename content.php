@@ -447,7 +447,7 @@ $('#dg').datagrid('reload');*/">
     }
   } else if ($_SESSION['gusernm'] == "purchasing") {
     if ($_SESSION['mat'] == 1) {
-      $and3 = "and rpo.kelnm='CUTTING'";
+      $and3 = "and rpo.kelnm IN ('CUTTING','JASA')";
     } else {
       $and3 = "and rpo.kelnm<>'CUTTING'";
       $and3b = "and rpo.kelnm like '%sewing%'";

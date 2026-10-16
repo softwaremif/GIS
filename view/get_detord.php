@@ -55,13 +55,21 @@ if ($cari1) {
     $and1 = "AND (" . implode(" OR ", $multiple_search) . ")";
 }
 
+// Search/filter hanya berlaku untuk baris DETAIL. Baris HEADER (SIZE) harus
+// selalu ikut, karena kolom size yang aktif ($activeSize) dibaca dari baris
+// itu — tanpa HEADER, qty di semua baris & footer jadi kosong/0.
+$filterDetail = "";
+if (trim("$and1 $and3 $and4 $and5") !== "") {
+    $filterDetail = "AND (bdown.jenis = 'HEADER' OR (1=1 $and1 $and3 $and4 $and5))";
+}
+
 //else if($cari2){ $and2="and byr.byrpk='$cari2'"; }
 //else if($cari3){ $and3="and ord.season like '%$cari3%'"; }
 
 $rs = mysqli_query($koneksi, "select * FROM bdown
 left outer join ord on ord.ordpk=bdown.ordpk
 where ord.ordpk='$ord'
-AND (bdown.jenis IN ('DETAIL','HEADER')) $and1 $and3 $and4 $and5
+AND (bdown.jenis IN ('DETAIL','HEADER')) $filterDetail
 AND (bdown.jenis <> 'DETAIL' OR (bdown.jenis = 'DETAIL' AND bdown.color <> ''))
 GROUP BY 
   CASE WHEN bdown.jenis = 'HEADER' THEN bdown.jenis ELSE bdown.bdownpk END
@@ -74,7 +82,7 @@ $result = array();
 $result['total'] = mysqli_num_rows(mysqli_query($koneksi, "select * FROM bdown
 left outer join ord on ord.ordpk=bdown.ordpk
 where ord.ordpk='$ord'
-AND (jenis IN ('DETAIL','HEADER')) $and1 $and3 $and4 $and5
+AND (jenis IN ('DETAIL','HEADER')) $filterDetail
 AND (bdown.jenis <> 'DETAIL' OR (bdown.jenis = 'DETAIL' AND bdown.color <> ''))
 GROUP BY 
   CASE WHEN bdown.jenis = 'HEADER' THEN bdown.jenis ELSE bdown.bdownpk END"));

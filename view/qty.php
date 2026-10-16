@@ -959,11 +959,13 @@
                                 $(ed.target).datebox({
                                     formatter: myformatter,
                                     parser: myparser,
+                                    validType: 'maxTahun',
                                     onShowPanel: function () {
                                         // pastikan tampil value lama saat panel dibuka
                                         if (originalFormatted) $(this).datebox('setValue', originalFormatted);
                                     },
                                     onSelect: function (date) {
+                                        if (date.getFullYear() > MAX_TAHUN_TGL) return;
                                         // ambil nilai dari parameter `date` (paling andal)
                                         const newValue = myformatter(date); // dd/mm/yyyy
                                         console.log('originalFormatted:', originalFormatted, ' newValue(from date):', newValue);
@@ -990,6 +992,9 @@
                                         }
                                     }
                                 });
+
+                                // tanggal di atas batas tahun tidak bisa dipilih di kalender
+                                $(ed.target).datebox('calendar').calendar({ validator: tahunTglValid });
 
                                 // langsung set value lama supaya tidak kosong saat editor aktif
                                 if (originalFormatted) $(ed.target).datebox('setValue', originalFormatted);
@@ -1022,6 +1027,65 @@
 		});
 	});
 
+	// function save_confirm() {
+	// 	var dg = $('#dg');
+	// 	var editedCells = dg.data('editedCells') || [];
+	// 	console.log("nilai editedCells:", editedCells);
+	// 	console.log("nilai length editedCells:", editedCells.length);
+
+	// 	if (editedCells.length === 0) {
+	// 		console.log("No changes detected.");
+	// 		return;
+	// 	}
+
+	// 	// Cek apakah ada field yang kosong sebelum menyimpan
+	// 	let emptyFields = [];
+	// 	for (var i = 0; i < editedCells.length; i++) {
+	// 		var cell = editedCells[i];
+	// 		// if (cell.value.trim() === '') { // Jika nilai kosong
+	// 		if (cell.value.trim() === '' && cell.field !== 'pono') {
+	// 			emptyFields.push(cell.field); // Tambahkan ke list
+	// 		}
+	// 	}
+
+	// 	if (emptyFields.length > 0) {
+	// 		// Jika ada field kosong, tampilkan alert dan batalkan penyimpanan
+	// 		// alert("Kolom berikut tidak boleh kosong: " + emptyFields.join(", "));
+	// 		$('#myHeader').show();
+	// 		$.messager.show({
+	// 			title: '',
+	// 			msg: `<div class="text-infomerah" style="width:400px;">
+	// 					Data pada kolom <b>${emptyFields.join(", ")}</b> tidak boleh kosong!
+	// 				</div>`,
+	// 			timeout: 3000,
+	// 			showType: 'slide',
+	// 			icon: 'info',
+	// 			width: 415,
+	// 			height: 55,
+	// 			style: {
+	// 				left: 0,
+	// 				right: '',
+	// 				top: '',
+	// 				bottom: -document.body.scrollTop - document.documentElement.scrollTop
+	// 			}
+	// 		});
+	// 		return;
+	// 	} else {
+	// 	$.ajax({
+	// 		type: "POST",
+	// 		url: "view/get_dataord.php?x=ord&ordpk=<?php echo $_GET['ord']; ?>",
+	// 		dataType: "json",
+	// 		success: function(data) {
+	// 			if (data.stsprod == 1) {
+	// 				$('#dialog-form-confirm-simpan').dialog('open').dialog('setTitle', '');
+	// 			} else {
+	// 				save_confirm2();
+	// 			}
+	// 		},
+	// 	});
+	// 	}
+	// }
+
 	function save_confirm() {
 		var dg = $('#dg');
 		var editedCells = dg.data('editedCells') || [];
@@ -1033,19 +1097,39 @@
 			return;
 		}
 
-		// Cek apakah ada field yang kosong sebelum menyimpan
+		// ✅ daftar field wajib isi
+		let requiredOnly = ['fob'];
+
+		// Cek apakah ada field wajib yang kosong sebelum menyimpan
 		let emptyFields = [];
 		for (var i = 0; i < editedCells.length; i++) {
 			var cell = editedCells[i];
-			// if (cell.value.trim() === '') { // Jika nilai kosong
-			if (cell.value.trim() === '' && cell.field !== 'pono') {
-				emptyFields.push(cell.field); // Tambahkan ke list
+			if (requiredOnly.includes(cell.field) && cell.value.trim() === '') {
+				emptyFields.push(cell.field);
 			}
 		}
 
+		// Tahun PCD / Ex Factory maksimal MAX_TAHUN_TGL (bisa lolos kalau diketik manual)
+		let tahunSalah = [];
+		for (var i = 0; i < editedCells.length; i++) {
+			var cell = editedCells[i];
+			var label = { pcd2: 'PCD', gac2: 'Ex Factory' }[cell.field];
+			var tahun = parseInt((cell.value || '').split('/')[2], 10);
+			if (label && tahun > MAX_TAHUN_TGL && !tahunSalah.includes(label)) tahunSalah.push(label);
+		}
+		if (tahunSalah.length > 0) {
+			$('#myHeader').show();
+			$.messager.alert({
+				title: 'Validasi Tahun',
+				msg: 'Data tahun kolom <b>' + tahunSalah.join(', ') + '</b> maksimal 2 tahun (s/d ' + MAX_TAHUN_TGL + ').',
+				icon: 'error',
+				width: 420
+			});
+			return;
+		}
+
 		if (emptyFields.length > 0) {
-			// Jika ada field kosong, tampilkan alert dan batalkan penyimpanan
-			// alert("Kolom berikut tidak boleh kosong: " + emptyFields.join(", "));
+			// Jika ada field wajib yang kosong, tampilkan alert dan batalkan penyimpanan
 			$('#myHeader').show();
 			$.messager.show({
 				title: '',
@@ -1066,18 +1150,18 @@
 			});
 			return;
 		} else {
-		$.ajax({
-			type: "POST",
-			url: "view/get_dataord.php?x=ord&ordpk=<?php echo $_GET['ord']; ?>",
-			dataType: "json",
-			success: function(data) {
-				if (data.stsprod == 1) {
-					$('#dialog-form-confirm-simpan').dialog('open').dialog('setTitle', '');
-				} else {
-					save_confirm2();
-				}
-			},
-		});
+			$.ajax({
+				type: "POST",
+				url: "view/get_dataord.php?x=ord&ordpk=<?php echo $_GET['ord']; ?>",
+				dataType: "json",
+				success: function(data) {
+					if (data.stsprod == 1) {
+						$('#dialog-form-confirm-simpan').dialog('open').dialog('setTitle', '');
+					} else {
+						save_confirm2();
+					}
+				},
+			});
 		}
 	}
 
@@ -1212,6 +1296,23 @@
 		$('#dialog-form-confirm-simpan').dialog('close');
 		$('#myHeader').show();
 	}
+
+	// Batas tahun tanggal PCD / Ex Factory: tahun berjalan (server) + 2.
+	var MAX_TAHUN_TGL = <?php echo (int) date('Y') + 2; ?>;
+
+	function tahunTglValid(date) {
+		return date.getFullYear() <= MAX_TAHUN_TGL;
+	}
+
+	$.extend($.fn.validatebox.defaults.rules, {
+		maxTahun: {
+			validator: function(value) {
+				var tahun = parseInt((value || '').split('/')[2], 10);
+				return !tahun || tahun <= MAX_TAHUN_TGL;
+			},
+			message: 'Tahun maksimal ' + MAX_TAHUN_TGL + ' (2 tahun ke depan)'
+		}
+	});
 
 	function myformatter(date) {
 		/*var y = date.getFullYear("yy");
@@ -1867,6 +1968,11 @@
 			},
 			success: function(data) {
 				$.messager.progress('close');
+				if (data.indexOf('validasi-tahun') !== -1) {
+					$('#dialog-conupload').dialog('close');
+					$.messager.alert({ title: 'Validasi Tahun', msg: data, icon: 'error', width: 520 });
+					return;
+				}
 				$('#dialog-conupload').dialog('close');
 				$('#dialog-form').dialog('close');
 				$('#form').form('reset');
@@ -2011,6 +2117,12 @@
 			},
 			success: function(data) {
 				$.messager.progress('close');
+				if (data.indexOf('validasi-tahun') !== -1) {
+					$('#dialog-conupload2').dialog('close');
+					$('#dialog-conupload').dialog('close');
+					$.messager.alert({ title: 'Validasi Tahun', msg: data, icon: 'error', width: 520 });
+					return;
+				}
 				$('#dialog-conupload2').dialog('close');
 				$('#dialog-conupload').dialog('close');
 				$('#dialog-form2').dialog('close');
@@ -2487,7 +2599,11 @@ url:'view/get_data.php?dt=qty3&ord=<?php echo $ord; ?>',valueField:'secsz',textF
                                             type:'datebox',
                                             options:{
                                                 formatter:myformatter,
-                                                parser:myparser
+                                                parser:myparser,
+                                                validType:'maxTahun',
+                                                onShowPanel:function(){
+                                                    $(this).datebox('calendar').calendar({validator:tahunTglValid});
+                                                }
                                             }
                                         },
                                         sorter:function(a,b){
@@ -2516,7 +2632,11 @@ url:'view/get_data.php?dt=qty3&ord=<?php echo $ord; ?>',valueField:'secsz',textF
                                             type:'datebox',
                                             options:{
                                                 formatter:myformatter,
-                                                parser:myparser
+                                                parser:myparser,
+                                                validType:'maxTahun',
+                                                onShowPanel:function(){
+                                                    $(this).datebox('calendar').calendar({validator:tahunTglValid});
+                                                }
                                             }
                                         },
                                         sorter:function(a,b){

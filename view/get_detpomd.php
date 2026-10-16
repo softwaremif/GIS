@@ -10,6 +10,7 @@ $order = isset($_POST['order']) ? strval($_POST['order']) : 'ASC';
 $po = isset($_GET['po']) ? ($_GET['po']) : false;
 $caria = isset($_POST['caria']) ? ($_POST['caria']) : false;
 $delsts = isset($_GET['delsts']) ? ($_GET['delsts']) : false;
+$uom = isset($_POST['uom']) ? ($_POST['uom']) : false;
 
 $unit1 = isset($_POST['unit1']) ? ($_POST['unit1']) : false;
 $unit2 = isset($_POST['unit2']) ? ($_POST['unit2']) : false;
@@ -24,16 +25,16 @@ $updts2=mysqli_query($koneksi,"update podt set spec='$specs' where rkbpk='$dts[r
 }*/
 
 
-// if ($caria) {
-//     $and1 = "and concat(ord.ordno,podt.spec,podt.colname,podt.colcode,podt.sizegar) like '%$caria%'";
+// if($caria){
+// $and1="and concat(ord.ordno,podt.spec,podt.colname,podt.colcode,podt.sizegar) like '%$caria%'";
 // }
 
 $and1 = "";
 if ($caria) {
-    $caria_values = explode(";", $caria);
+    $cari1_values = explode(";", $caria);
     $multiple_search = [];
 
-    foreach ($caria_values as $value) {
+    foreach ($cari1_values as $value) {
         $trimmed_value = trim($value);
         $multiple_search[] = "concat(ord.ordno,podt.spec,podt.colname,podt.colcode,podt.sizegar) like '%$trimmed_value%'";
     }
@@ -45,36 +46,31 @@ if ($delsts > 0) {
     $and2 = "and podt.delsts='0'";
 }
 
-$rs = mysqli_query($koneksi, "SELECT rkb.rkbpk, podt.item, podt.spec, podt.colname, podt.sizegar, podt.unit, podt.bdownqty, podt.pocons, cur.curpk, cur.cursign,
+$rs = mysqli_query($koneksi, "SELECT rkb.rkbpk, rkb.item, rkb.spec, rkb.colname, rkb.sizegar, rkb.unit, podt.bdownqty, podt.pocons, cur.curpk, cur.cursign, podt.item as poitem, podt.spec as pospec, podt.colname as pocolname, podt.sizegar as posizegar, podt.unit as pounit, podt.colcode as pocolcode,
 rkb.piqty, rkb.piunit, rkb.piprice, rkb.curpk as rcurpk, rkb.pocons as rpocons, rkb.qrs as rqrs, rkb.price as rprice, podt.uqrs, podt.qrs, podt.podtpk, podt.price, ord.ordpk, ord.ordno, cur.curid, rkb.stspk, podt.popk, podt.delsts,
 podt.hspec1,podt.hspec2,podt.hspec3,podt.hspec4,podt.hspec5,podt.hspec6,podt.hspec7,podt.hspec8,podt.spec1,podt.spec2,podt.unit2,podt.fabwidth,podt.fablength,podt.perpcs,podt.copy,
-podt.spec3,podt.spec4,podt.spec5,podt.spec6,podt.spec7,podt.spec8,podt.tspec, podt.colcode, ord.prodes, podt.specadd, sup.supnm, podt.tpodt, podt.kelnm
+podt.spec3,podt.spec4,podt.spec5,podt.spec6,podt.spec7,podt.spec8,podt.tspec, rkb.colcode, ord.prodes, podt.specadd, sup.supnm, podt.tpodt, podt.kelnm, podt.pocons2, podt.price2, podt.qrs2
 FROM podt
 left outer join po on po.popk=podt.popk
 left outer join rkb on podt.rkbpk=rkb.rkbpk
 left outer join ord on ord.ordpk=podt.ordpk
 left outer join sup on sup.suppk=po.suppk
-left outer join cur on  cur.curpk=podt.curpk
+left outer join cur on cur.curpk=podt.curpk
 WHERE podt.popk='$po' and podt.stspk>='1' $and1 $and2
 GROUP BY podt.rkbpk
 ORDER BY $sort $order
 LIMIT $rows OFFSET $offset");
 $result = array();
-$result['total'] = mysqli_num_rows(mysqli_query($koneksi, "SELECT rkb.rkbpk, podt.item, podt.spec, podt.colname, podt.sizegar, podt.unit, podt.bdownqty, podt.pocons, cur.curpk, cur.cursign,
-rkb.piqty, rkb.piunit, rkb.piprice, rkb.curpk as rcurpk, rkb.pocons as rpocons, rkb.qrs as rqrs, rkb.price as rprice, podt.uqrs, podt.qrs, podt.podtpk, podt.price, ord.ordpk, ord.ordno, cur.curid, rkb.stspk, podt.popk, podt.delsts,
-podt.hspec1,podt.hspec2,podt.hspec3,podt.hspec4,podt.hspec5,podt.hspec6,podt.hspec7,podt.hspec8,podt.spec1,podt.spec2,podt.unit2,podt.fabwidth,podt.fablength,podt.perpcs,podt.copy,
-podt.spec3,podt.spec4,podt.spec5,podt.spec6,podt.spec7,podt.spec8,podt.tspec, podt.colcode, ord.prodes, podt.specadd, sup.supnm, podt.tpodt, podt.kelnm
-FROM podt
+$result['total'] = mysqli_num_rows(mysqli_query($koneksi, "SELECT * FROM podt
 left outer join po on po.popk=podt.popk
 left outer join rkb on podt.rkbpk=rkb.rkbpk
 left outer join ord on ord.ordpk=podt.ordpk
 left outer join sup on sup.suppk=po.suppk
-left outer join cur on  cur.curpk=podt.curpk
+left outer join cur on cur.curpk=podt.curpk
 WHERE podt.popk='$po' and podt.stspk>='1' $and1 $and2 
 GROUP BY podt.rkbpk"));
 $row = array();
 $k = $offset;
-mysqli_set_charset($koneksi, "utf8mb4");
 while ($data = mysqli_fetch_array($rs)) {
     $k++;
     if ($data['curpk'] == 3) {
@@ -99,6 +95,16 @@ while ($data = mysqli_fetch_array($rs)) {
         $sts = "In progress";
     }
 
+    /*if($data['piqty']>0){ $piqty1=$data['piqty']; }
+else { $piqty1=$data['pocons']; }
+
+if($data['piprice']>0){ $piprice1=$data['piprice']; }
+else { $piprice1=$data['price']; }
+
+if($data['piunit']){ $piunit1=$data['piunit']; }
+else { $piunit1=$data['unit']; }*/
+
+    //$piqty1=ceil($data['pocons']);
 
     $qrs = $data['qrs'];
     $rqrs = $data['rqrs'];
@@ -128,49 +134,18 @@ while ($data = mysqli_fetch_array($rs)) {
     //$pocons1=ceil($data['pocons']);
 
 
-    if ($unit2 == 1) {
-        $unit = $data['unit2'];
-        if ($data['unit2'] == "Lusin") {
-            $pocons1 = ($data['pocons'] - $qrs) / 12;
-            // $rpocons1=$data['rpocons']-$rqrs;   
-
-            $rpocons1 = ($data['rpocons'] - $rqrs) / 12;
-            // $rprice1= ($data['rprice'])*12;
-            // $price1= $price*12;
-        } else if ($data['unit2'] == "Dozen") {
-            $pocons1 = ($data['pocons'] - $qrs) / 12;
-            // $rpocons1=$data['rpocons']-$rqrs;   
-            $price1 = ($data['price']) * 12;
-            $price = number_format($price1, 5, ".", ",");
-
-            $rpocons1 = ($data['rpocons'] - $rqrs) / 12;
-            // $rprice1= ($data['rprice'])*12;
-            // $price1= ($data['price'])*12;
-            // $price1= $price*12;
-
-            $price1 = ($data['price']) * 12;
-            $price = number_format($price1, 5, ".", ",");
-        } else if ($data['unit2'] == "Box") {
-            $pocons1 = ($data['pocons'] - $qrs) / $perpcs1;
-            // $rpocons1=$data['rpocons']-$rqrs;   
-            $rpocons1 = ($data['rpocons'] - $rqrs) / $perpcs1;
-            // $rprice1= ($data['rprice'])*$perpcs1;
-            $price1 = ($data['price']) * $perpcs1;
-            $price = number_format($price1, 5, ".", ",");
-
-            // $price1= $price*$perpcs1;
-        } else if ($data['unit2'] == "Kg") {
-            $widthinc = $fabwidth1 / 2.54;
-            $widthM = ($widthinc + 2) * 2.54 / 100;
-            $weightG = $widthM * $fablength1;
-            $weightly = $weightG * 0.9144;
-            $length = 1000 / $weightly;
-            $pocons1 = $length * ($data['pocons'] - $qrs);
-            $rpocons1 = $length * ($data['rpocons'] - $rqrs);
+    if ($data['unit2'] <> '') {
+        if ($uom == 1) {
+            $unitpo = $data['unit'];
+            $pocons1 = $data['pocons'] - $qrs;
+            $qrs1 = $data['qrs'];
         } else {
-            $pocons1 = ceil($data['pocons'] - $qrs);
-            $rpocons1 = ceil($data['rpocons'] - $rqrs);
+            $unitpo = $data['unit2'];
+            $pocons1 = $data['pocons2'];
+            $qrs1 = $data['qrs2'];
         }
+        $unit = $data['unit'];
+        $rpocons1 = $data['rpocons'] - $rqrs;
 
         if ($pocons1 > $rpocons1) {
             $cek = 1;
@@ -178,27 +153,34 @@ while ($data = mysqli_fetch_array($rs)) {
             $cek = 0;
         }
 
-        $pocons = number_format($pocons1, 2, ".", ",");
-        $rpocons = number_format($rpocons1, 2, ".", ",");
+        $pocons = number_format($pocons1, 4, ".", ",");
+        $rpocons = number_format($rpocons1, 3, ".", ",");
 
         if ($piqty1 == "0.00") {
             $piqty = "";
             $piqty2 = "";
         } else {
-            $piqty = number_format($piqty1, 2, ".", ",");
+            $piqty = number_format($piqty1, 3, ".", ",");
             $piqty2 = $piqty1;
         }
     } else {
         $unit = $data['unit'];
+        if ($uom == 1) {
+            $unitpo = $data['unit'];
+            $qrs1 = $data['qrs'];
+        } else {
+            $unitpo = $data['unit2'];
+            $qrs1 = $data['qrs2'];
+        }
         // $price = $price;
-        // $price=number_format($data['price'],2,".",",");
+        // $price=number_format($data['price'],3,".",",");
 
         if ($data['unit'] == "KG" || $data['unit'] == "DZN" || $data['unit'] == "RIM" || $data['unit'] == "GROSS") {
             $pocons1 = $data['pocons'] - $qrs;
             $rpocons1 = $data['rpocons'] - $rqrs;
         } else {
-            $pocons1 = ceil($data['pocons'] - $qrs);
-            $rpocons1 = ceil($data['rpocons'] - $rqrs);
+            $pocons1 = $data['pocons'] - $qrs;
+            $rpocons1 = $data['rpocons'] - $rqrs;
         }
 
         if ($pocons1 > $rpocons1) {
@@ -222,29 +204,29 @@ while ($data = mysqli_fetch_array($rs)) {
             $piqty = "";
             $piqty2 = "";
         } else {
-            $piqty = number_format($piqty1, 2, ".", ",");
+            $piqty = number_format($piqty1, 3, ".", ",");
             $piqty2 = $piqty1;
         }
     }
 
     // if($data['unit']=="KG" || $data['unit']=="DZN" || $data['unit']=="RIM" || $data['unit']=="GROSS"){
-// $pocons1=$data['pocons']-$qrs;  
-// $rpocons1=$data['rpocons']-$rqrs;   
-// } else {
-// $pocons1=ceil($data['pocons']-$qrs);
-// $rpocons1=ceil($data['rpocons']-$rqrs);
-// }
+    // $pocons1=$data['pocons']-$qrs;  
+    // $rpocons1=$data['rpocons']-$rqrs;   
+    // } else {
+    // $pocons1=ceil($data['pocons']-$qrs);
+    // $rpocons1=ceil($data['rpocons']-$rqrs);
+    // }
 
     // if($pocons1>$rpocons1){ $cek=1; }
-// else { $cek=0; }
+    // else { $cek=0; }
 
-    // $pocons=number_format($pocons1,2,".",",");
-// $rpocons=number_format($rpocons1,2,".",",");
+    // $pocons=number_format($pocons1,3,".",",");
+    // $rpocons=number_format($rpocons1,3,".",",");
 
     // if($piqty1=="0.00"){ $piqty=""; $piqty2=""; }
-// else {
-// $piqty=number_format($piqty1,2,".",","); $piqty2=$piqty1;
-// }
+    // else {
+    // $piqty=number_format($piqty1,3,".",","); $piqty2=$piqty1;
+    // }
 
     $trpocons1 = $trpocons1 + $rpocons1;
 
@@ -254,13 +236,13 @@ while ($data = mysqli_fetch_array($rs)) {
             $rtotal = "-";
         } else {
             if ($data['unit'] == "KG" || $data['unit'] == "DZN" || $data['unit'] == "RIM" || $data['unit'] == "GROSS") {
-                $rprice = number_format($data['rprice'], 2, ".", ",");
+                $rprice = number_format($data['rprice'], 3, ".", ",");
                 $rtot = $data['rprice'] * $data['rpocons'];
-                $rtotal = $dtcursign . "" . number_format($rtot, 2, ".", ",");
+                $rtotal = $dtcursign . "" . number_format($rtot, 3, ".", ",");
             } else {
-                $rprice = number_format($data['rprice'], 2, ".", ",");
+                $rprice = number_format($data['rprice'], 3, ".", ",");
                 $rtot = $data['rprice'] * ceil($data['rpocons']);
-                $rtotal = $dtcursign . "" . number_format($rtot, 2, ".", ",");
+                $rtotal = $dtcursign . "" . number_format($rtot, 3, ".", ",");
             }
         }
     } else {
@@ -282,19 +264,44 @@ while ($data = mysqli_fetch_array($rs)) {
 
     $trtotal1 = $trtotal1 + $rtot;
 
+    if ($uom == 1) {
+        $unitpo_p = $data['unit'];
+        $qrs1_p = $data['qrs'];
+    } else {
+        $unitpo_p = $data['unit2'];
+        $qrs1_p = $data['qrs2'];
+    }
+
     if ($data['curid'] == "IDR") {
         if ($data['price'] == "0.00000" || $data['price'] == "") {
             $price = "-";
             $total = "-";
         } else {
-            if ($data['unit'] == "KG" || $data['unit'] == "DZN" || $data['unit'] == "RIM" || $data['unit'] == "GROSS") {
-                $price = number_format($data['price'], 2, ".", ",");
-                $tot = $data['price'] * $data['pocons'];
-                $total = $cursign . "" . number_format($tot, 2, ".", ",");
+            if ($unitpo_p == "KG" || $unitpo_p == "DZN" || $unitpo_p == "RIM" || $unitpo_p == "GROSS") {
+                if ($data['unit'] <> '') {
+                    if ($uom == 1) {
+                        $price = number_format($data['price'], 3, ".", ",");
+                        $tot = $data['price'] * $data['pocons'];
+                    } else {
+                        $price = number_format($data['price2'], 3, ".", ",");
+                        $tot = $data['price2'] * $data['pocons2'];
+                    }
+                } else {
+                    $price = number_format($data['price'], 3, ".", ",");
+                }
+                $total = $cursign . "" . number_format($tot, 3, ".", ",");
             } else {
-                $price = number_format($data['price'], 2, ".", ",");
-                $tot = $data['price'] * ceil($data['pocons']);
-                $total = $cursign . "" . number_format($tot, 2, ".", ",");
+                if ($unitpo_p <> '') {
+                    if ($uom == 1) {
+                        $price = number_format($data['price'], 3, ".", ",");
+                    } else {
+                        $price = number_format($data['price2'], 3, ".", ",");
+                    }
+                } else {
+                    $price = number_format($data['price'], 3, ".", ",");
+                }
+                $tot = $data['price'] * $data['pocons'];
+                $total = $cursign . "" . number_format($tot, 0, ".", ",");
             }
         }
 
@@ -303,10 +310,10 @@ while ($data = mysqli_fetch_array($rs)) {
         // $piprice2="";
         // $total2="";
         // } else {
-        // $piprice=number_format($piprice1,2,".",",");
-        // $piprice2=number_format($piprice1,2,".",",");
+        // $piprice=number_format($piprice1,3,".",",");
+        // $piprice2=number_format($piprice1,3,".",",");
         // $tot2=$piprice1*$piqty1;
-        // $total2=$cursign."".number_format($tot2,2,".",",");
+        // $total2=$cursign." ".number_format($tot2,3,".",",");
         // }
     } else {
         if ($data['price'] == "0.00000" || $data['price'] == "") {
@@ -314,11 +321,27 @@ while ($data = mysqli_fetch_array($rs)) {
             $total = "-";
         } else {
             if ($data['unit'] == "KG" || $data['unit'] == "DZN" || $data['unit'] == "RIM" || $data['unit'] == "GROSS") {
-                $price = number_format($data['price'], 5, ".", ",");
+                if ($data['unit'] <> '') {
+                    if ($uom == 1) {
+                        $price = number_format($data['price'], 5, ".", ",");
+                    } else {
+                        $price = number_format($data['price2'], 5, ".", ",");
+                    }
+                } else {
+                    $price = number_format($data['price'], 5, ".", ",");
+                }
                 $tot = $data['price'] * $data['pocons'];
                 $total = $cursign . "" . number_format($tot, 5, ".", ",");
             } else {
-                $price = number_format($data['price'], 5, ".", ",");
+                if ($data['unit'] <> '') {
+                    if ($uom == 1) {
+                        $price = number_format($data['price'], 5, ".", ",");
+                    } else {
+                        $price = number_format($data['price2'], 5, ".", ",");
+                    }
+                } else {
+                    $price = number_format($data['price'], 5, ".", ",");
+                }
                 $tot = $data['price'] * ceil($data['pocons']);
                 $total = $cursign . "" . number_format($tot, 5, ".", ",");
             }
@@ -332,7 +355,7 @@ while ($data = mysqli_fetch_array($rs)) {
         // $piprice=number_format($piprice1,5,".",",");
         // $piprice2=number_format($piprice1,5,".",",");
         // $tot2=$piprice1*$piqty1;
-        // $total2=$cursign."".number_format($tot2,5,".",",");
+        // $total2=$cursign." ".number_format($tot2,5,".",",");
         // }
     }
 
@@ -358,8 +381,8 @@ while ($data = mysqli_fetch_array($rs)) {
             if ($data['curpk'] == 1) {
                 $pprice1 = $data['price'];
                 $rprice1 = $data['rprice'] * $dtk['rupiah'];
-                $pprice2 = number_format($pprice1, 3, ".",",");
-                $rprice2 = number_format($rprice1, 3, ".",",");
+                $pprice2 = number_format($pprice1, 2, ".", "");
+                $rprice2 = number_format($rprice1, 2, ".", "");
             } else {
                 $pprice1 = $data['price'];
                 $rprice1 = $data['rprice'];
@@ -369,8 +392,8 @@ while ($data = mysqli_fetch_array($rs)) {
         } else {
             $pprice1 = $data['price'];
             $rprice1 = $data['rprice'];
-            $pprice2 = number_format($pprice1, 3, ".",",");
-            $rprice2 = number_format($rprice1, 3, ".",",");
+            $pprice2 = number_format($pprice1, 2, ".", "");
+            $rprice2 = number_format($rprice1, 2, ".", "");
         }
 
         if ($pprice2 > $rprice2) {
@@ -383,22 +406,22 @@ while ($data = mysqli_fetch_array($rs)) {
     $kelnm = RTRIM($data['kelnm']);
 
     //$btn = "<input type='text' style='width:75px;' id='piqty2' value='$piqty2'>";
-//$btn2 = "<input type='text' style='width:75px;' id='piprice2' value='$piprice2'>";
+    //$btn2 = "<input type='text' style='width:75px;' id='piprice2' value='$piprice2'>";
     $specb = preg_replace('/[^a-zA-Z"#()_,%+-;–$“&>=”:â€â€³Â½â€³â†’~*â€“Â®Â¼Ã©Â±Ã‰ï¿=¥Ã¨"]/', ' ', $data['spec']);
     $specadd = preg_replace('/[^a-zA-Z"#()_,%+-;–$“&>=”:â€â€³Â½â€³â†’~*â€“Â®Â¼Ã©Â±Ã‰ï¿=¥Ã¨"]/', ' ', $data['specadd']);
     $sup = TRIM($data['supnm']);
     $supnm2 = substr(TRIM($data['supnm']), 0, 5);
     /*if($supnm2=="STOCK"){
-    if($specadd<>""){
-    if($data['kelnm']=="cutting"){
-    $spec=TRIM($specb)."-".TRIM($specadd);
-    } else {
-    $spec=TRIM($specb); 
-    }
-    } else {
-    $spec=TRIM($specb);    
-    }
-    } else {*/
+if($specadd<>""){
+if($data['kelnm']=="cutting"){
+$spec=TRIM($specb)."-".TRIM($specadd);
+} else {
+$spec=TRIM($specb); 
+}
+} else {
+$spec=TRIM($specb);    
+}
+} else {*/
     $spec = TRIM($specb);
     //}
     $sizeb = preg_replace('/[^a-zA-Z"#()_,%+-;–$“&>=”:â€â€³Â½â€³â†’~*â€“Â®Â¼Ã©Â±Ã‰ï¿=¥Ã¨"]/', ' ', $data['sizegar']);
@@ -425,8 +448,8 @@ while ($data = mysqli_fetch_array($rs)) {
     $dt = mysqli_fetch_array($cr);
 
     /*$btn = '<a href="?hal=detord&ord='.$data['ordpk'].'" style="text-decoration:none;">'.$data['ordno'].'</a>';
-    if($data['sts']==1){ $sts="In progress"; }
-    if($data['sts']==2){ $sts="Ready for PO"; }*/
+if($data['sts']==1){ $sts="In progress"; }
+if($data['sts']==2){ $sts="Ready for PO"; }*/
     if ($dt['postatpk'] == 1 && $data['popk'] > 1) {
         $sts = "Awating PI";
     } else if ($dt['postatpk'] == 2) {
@@ -498,7 +521,6 @@ while ($data = mysqli_fetch_array($rs)) {
         'spec8' => $spec8c,
         'sizegar' => $sizegar,
         'qty' => $qty,
-        'unit' => $data['unit'],
         'colname' => TRIM($data['colname']),
         'colcode' => TRIM($data['colcode']),
         'price' => $price,
@@ -517,6 +539,7 @@ while ($data = mysqli_fetch_array($rs)) {
         'varcons' => $data['varcons'],
         'totcons' => $data['totcons'],
         'qrs' => $qrs,
+        'qrs1' => $qrs1,
         'pocons' => $pocons,
         'pocons1' => $pocons1,
         'rqrs' => $rqrs,
@@ -546,10 +569,15 @@ while ($data = mysqli_fetch_array($rs)) {
         'tpodt' => $data['tpodt'],
         'prodes' => $data['prodes'],
         'unit' => $unit,
-        'copy' => $data['copy']
+        'unitcnv' => $unitpo,
+        'copy' => $data['copy'],
+        'poitem' => $data['poitem'],
+        'pospec' => $data['pospec'],
+        'pocolname' => TRIM($data['pocolname']),
+        'posizegar' => $data['posizegar'],
+        'pounit' => $data['pounit'],
+        'pocolcode' => TRIM($data['pocolcode']),
     );
 }
 $result = array_merge($result, array('rows' => $row));
-// echo json_encode($result);
 echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
-?>

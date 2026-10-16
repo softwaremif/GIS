@@ -858,6 +858,7 @@ ORDER BY
 		//$btn = '<a href="#" style="text-decoration:none;">GET</a>';
 		if (TRIM($data['jenis']) == "HEADER") {
 			$po = "";
+			$poref = "";
 			$op = "";
 			$style = "";
 			$color = "";
@@ -905,6 +906,7 @@ ORDER BY
 			$tot = "";
 		} else if (TRIM($data['jenis']) == "DETAIL") {
 			$po = $data['pono'];
+			$poref = $data['poref'];
 			$op = $data['opno'];
 			$style = $data['style'];
 			$color = $data['color'];
@@ -1121,6 +1123,7 @@ ORDER BY
 			}
 		} else if (TRIM($data['jenis']) == "FOOTER1") {
 			$po = "";
+			$poref = "";
 			$op = "";
 			$style = "";
 			$color = "";
@@ -1430,6 +1433,7 @@ ORDER BY
 			'bdownpk' => $data['bdownpk'],
 			'country' => $data['country'],
 			'pono' => $po,
+			'poref' => $poref,
 			'opno' => $op,
 			'style' => $style,
 			'color' => $color,

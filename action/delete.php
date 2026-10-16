@@ -4,7 +4,6 @@ include "../config/koneksi.php";
 include "../config/koneksi11a.php";
 include "../config/koneksi103a.php";
 include "../config/ip.php";
-include "../config/log_bdown.php";
 
 $ip=ip();
 $browser=browser();
@@ -72,13 +71,8 @@ $del2b=mysqli_query($koneksi,"delete from bdown where jenis='FOOTER1' and sumby=
 // $dela2=mysqli_query($koneksi103a,"delete from po where bdownpk='$bdownpk' and ordpk='$dt[ordpk]'");
 // }
 
-// Hapus baris PO mengubah total qty order — direkam untuk notifikasi schedule.
-$totalSebelum = bdown_total_order($koneksi, $dt['ordpk']);
-
 $sql = "delete from bdown where bdownpk='$bdownpk'";
 @mysqli_query($koneksi,$sql);
-
-log_bdown_total($koneksi, $dt['ordpk'], $bdownpk, $totalSebelum, $userlog, $ip, $sistem);
 
 $lognote="User " .$userlog. " delete data qty order " .$dt['ordno'];
 $insert2=mysqli_query($koneksi,"insert into logtran set

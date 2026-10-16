@@ -2892,7 +2892,7 @@ url:'view/get_data.php?dt=piunit'}}">PO Units</th>
 <th field="rqrs" width="90" sortable="true">RKB PPS</th>
 <th field="rprice" width="90" sortable="true">RKB price</th>
 <th field="rtotal" width="90" sortable="true">RKB Total</th>
-<th field="unitcnv" width="84" sortable="true" editor="text">PO unit</th>
+<th field="unitcnv" width="84" sortable="true" editor="text">PO units</th>
 <th field="pocons" width="90" sortable="true" editor="text">PO qty</th>
 <th field="qrs1" width="90" sortable="true" editor="text">PO PPS</th>
 <th field="price" width="90" sortable="true" editor="text">PO price</th>

@@ -1709,12 +1709,12 @@ function AddUnit() {
           $('#unit_ori').val(arr[0]);
           $('#satuan').combobox({
               data: [{
-                  "value": 'PIECES',
-                  "text": 'PIECES' ,
+                  "value": 'PCS',
+                  "text": 'PCS' ,
                 },
                 {
-                  "value": 'DOZEN',
-                  "text": 'DOZEN',
+                  "value": 'DZN',
+                  "text": 'DZN',
                 },
                 {
                   "value": 'GROSS',
@@ -1725,16 +1725,16 @@ function AddUnit() {
                   "text": 'BOX (Packaging)',
                 },
                 {
-                  "value": 'YARDS',
-                  "text": 'YARDS',
+                  "value": 'YARD',
+                  "text": 'YARD',
                 },
                 {
-                  "value": 'METER',
-                  "text": 'METER',
+                  "value": 'M',
+                  "text": 'M',
                 },
                 {
-                  "value": 'CENTIMETER',
-                  "text": 'CENTIMETER',
+                  "value": 'CM',
+                  "text": 'CM',
                 },
                 {
                   "value": 'KG',
@@ -2690,7 +2690,7 @@ data-options="
 <th field="rqrs" width="90" sortable="true">RKB PPS</th>
 <th field="rprice" width="90" sortable="true">RKB price</th>
 <th field="rtotal" width="90" sortable="true">RKB Total</th>
-<th field="unitcnv" width="84" sortable="true" editor="text">PO unit</th>
+<th field="unitcnv" width="84" sortable="true" editor="text">PO units</th>
 <th field="pocons" width="90" sortable="true" editor="text">PO qty</th>
 <th field="qrs1" width="90" sortable="true" editor="text">PO PPS</th>
 <th field="price" width="90" sortable="true" editor="text">PO price</th>

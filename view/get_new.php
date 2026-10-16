@@ -170,24 +170,47 @@ while ($dt4b = mysqli_fetch_array($cari4b)) {
     $update2b = mysqli_query($koneksi, "update rpo set stspk='1', popros='0', popk='0' where rkbpk='$dt4b[rkbpk]'");
 }
 
-$rs = mysqli_query($koneksi, "SELECT *  FROM rpo
+// $rs = mysqli_query($koneksi, "SELECT *  FROM rpo
+// LEFT OUTER JOIN ord ON ord.ordpk=rpo.ordpk
+// LEFT OUTER JOIN fu ON fu.fupk=ord.fupk
+// LEFT OUTER JOIN sup ON sup.suppk=rpo.suppk
+// LEFT OUTER JOIN cur ON  cur.curpk=rpo.curpk
+// left outer join byr on byr.byrpk=ord.byrpk
+// WHERE rpo.stspk='1' and rpo.popros='0' and rpo.popk='0' and ord.fupk<>'' and rpo.rkbpk<>'' and rpo.item<>'' $and1 $and2 $and3 $and4 $and5 $and6 $csupp $ccol $cspec
+// ORDER BY $sort $order, fu.funm asc, rpo.item asc
+// LIMIT $rows OFFSET $offset");
+
+$rs = mysqli_query($koneksi, "SELECT * FROM rpo
 LEFT OUTER JOIN ord ON ord.ordpk=rpo.ordpk
 LEFT OUTER JOIN fu ON fu.fupk=ord.fupk
 LEFT OUTER JOIN sup ON sup.suppk=rpo.suppk
-LEFT OUTER JOIN cur ON  cur.curpk=rpo.curpk
-left outer join byr on byr.byrpk=ord.byrpk
-WHERE rpo.stspk='1' and rpo.popros='0' and rpo.popk='0' and ord.fupk<>'' and rpo.rkbpk<>'' and rpo.item<>'' $and1 $and2 $and3 $and4 $and5 $and6 $csupp $ccol $cspec
-ORDER BY $sort $order, fu.funm asc, rpo.item asc
+LEFT OUTER JOIN cur ON cur.curpk=rpo.curpk
+LEFT OUTER JOIN byr ON byr.byrpk=ord.byrpk
+WHERE rpo.stspk='1' AND rpo.popros='0' AND rpo.popk='0' 
+  AND ord.fupk<>'' AND rpo.rkbpk<>'' AND rpo.item<>''
+  AND EXISTS (SELECT 1 FROM rkb WHERE rkb.rkbpk = rpo.rkbpk)
+  $and1 $and2 $and3 $and4 $and5 $and6 $csupp $ccol $cspec
+ORDER BY $sort $order, fu.funm ASC, rpo.item ASC
 LIMIT $rows OFFSET $offset");
 
 $result = array();
-$result['total'] = mysqli_num_rows(mysqli_query($koneksi, "SELECT *  FROM rpo
+// $result['total'] = mysqli_num_rows(mysqli_query($koneksi, "SELECT *  FROM rpo
+// LEFT OUTER JOIN ord ON ord.ordpk=rpo.ordpk
+// LEFT OUTER JOIN fu ON fu.fupk=ord.fupk
+// LEFT OUTER JOIN sup ON sup.suppk=rpo.suppk
+// LEFT OUTER JOIN cur ON  cur.curpk=rpo.curpk
+// left outer join byr on byr.byrpk=ord.byrpk
+// WHERE rpo.stspk='1' and rpo.popros='0' and rpo.popk='0' and ord.fupk<>'' and rpo.rkbpk<>'' and rpo.item<>'' $and1 $and2 $and3 $and4 $and5 $and6 $csupp $ccol $cspec"));
+$result['total'] = mysqli_num_rows(mysqli_query($koneksi, "SELECT * FROM rpo
 LEFT OUTER JOIN ord ON ord.ordpk=rpo.ordpk
 LEFT OUTER JOIN fu ON fu.fupk=ord.fupk
 LEFT OUTER JOIN sup ON sup.suppk=rpo.suppk
-LEFT OUTER JOIN cur ON  cur.curpk=rpo.curpk
-left outer join byr on byr.byrpk=ord.byrpk
-WHERE rpo.stspk='1' and rpo.popros='0' and rpo.popk='0' and ord.fupk<>'' and rpo.rkbpk<>'' and rpo.item<>'' $and1 $and2 $and3 $and4 $and5 $and6 $csupp $ccol $cspec"));
+LEFT OUTER JOIN cur ON cur.curpk=rpo.curpk
+LEFT OUTER JOIN byr ON byr.byrpk=ord.byrpk
+WHERE rpo.stspk='1' AND rpo.popros='0' AND rpo.popk='0' 
+  AND ord.fupk<>'' AND rpo.rkbpk<>'' AND rpo.item<>''
+  AND EXISTS (SELECT 1 FROM rkb WHERE rkb.rkbpk = rpo.rkbpk)
+  $and1 $and2 $and3 $and4 $and5 $and6 $csupp $ccol $cspec"));
 $row = array();
 
 $k = $offset;

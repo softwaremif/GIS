@@ -9,8 +9,19 @@
       $tanggal  = substr($tgl,0,2);
       $bulan    = getBulanin(substr($tgl,3,2));
       $tahun    = substr($tgl,6,4);
-      return $tahun."-".$bulan."-".$tanggal;         
-    } 
+      return $tahun."-".$bulan."-".$tanggal;
+    }
+    // Cek tahun tanggal dd/mm/yyyy maksimal tahun berjalan + $rentang.
+    // $kolom = ['PCD' => '29/12/2026', ...]; mengembalikan label yang salah.
+    function tahun_lewat_batas($kolom, $rentang = 2){
+      $maks  = (int) date('Y') + $rentang;
+      $salah = [];
+      foreach ($kolom as $label => $tgl) {
+        $tahun = (int) substr(trim((string) $tgl), 6, 4);
+        if ($tahun > $maks) $salah[] = $label;
+      }
+      return $salah;
+    }
     function getBulanin($bln){
       switch ($bln){
         case 1: 

@@ -95,10 +95,68 @@ include 'material_edit_detail.php';
 		}
 
 		.tooltip {
-				max-width: 200px; 
-				word-wrap: break-word; 
-				white-space: normal; 
+				max-width: 200px;
+				word-wrap: break-word;
+				white-space: normal;
 		}
+
+	/* Dialog fit:true (material_create/material_edit) membuat easyui menambahkan
+	   class panel-fit/panel-noscroll ke html/body (overflow:hidden) sehingga halaman tidak bisa discroll */
+	/* konten halaman memakai position:absolute (containing block = viewport),
+	   jadi yang harus bisa scroll adalah html, bukan body */
+	html.panel-fit {
+		overflow-y: auto !important;
+		overflow-x: hidden !important;
+	}
+
+	html.panel-fit body,
+	body.panel-noscroll {
+		overflow: visible !important;
+	}
+
+	/* Dropdown Import */
+	.dropdown-imp {
+		position: relative;
+		display: inline-block;
+		vertical-align: middle;
+	}
+
+	.dropbtn-imp {
+		padding: 5px 10px;
+		color: #FFFFFF;
+		background-color: #000000;
+		border: none;
+		border-radius: 8px;
+		font-size: 14px;
+		cursor: pointer;
+	}
+
+	.dropdown-content-imp {
+		display: none;
+		position: absolute;
+		background-color: #FFFFFF;
+		min-width: 200px;
+		margin-top: 5px;
+		text-align: left;
+		box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+		z-index: 999;
+	}
+
+	.dropdown-content-imp a {
+		color: black;
+		padding: 7px 12px;
+		text-decoration: none;
+		display: block;
+		font-size: 14px;
+	}
+
+	.dropdown-content-imp a:hover {
+		background-color: #ddd;
+	}
+
+	.dropdown-content-imp.show-imp {
+		display: block;
+	}
 </style>
 
 <script type="text/javascript">
@@ -2528,6 +2586,113 @@ $display_qty = number_format($pure_qty, 0);
 	function importdata() {
 		$('#dialog-form2b').dialog('open').dialog('setTitle', '');
 		$('#form2b').form('load', row);
+	}
+
+	function toggleImport(btn) {
+		var menu = $(btn).siblings('.dropdown-content-imp');
+		$('.dropdown-content-imp').not(menu).removeClass('show-imp');
+		menu.toggleClass('show-imp');
+	}
+
+	$(document).on('click', function(e) {
+		if (!$(e.target).closest('.dropdown-imp').length) {
+			$('.dropdown-content-imp').removeClass('show-imp');
+		}
+	});
+
+	function importexcel() {
+		$('.dropdown-content-imp').removeClass('show-imp');
+		$('#formimpexcel').form('clear');
+		$('#dialog-impexcel').dialog('open').dialog('center');
+	}
+
+	function cancelimportexcel() {
+		$('#formimpexcel').form('clear');
+		$('#dialog-impexcel').dialog('close');
+	}
+
+	function saveimportexcel() {
+		var input = $('#formimpexcel').find('input[type=file]')[0];
+		var file = input && input.files.length ? input.files[0] : null;
+		if (!file) {
+			$.messager.alert('Warning', 'Pilih file excel terlebih dahulu', 'warning');
+			return;
+		}
+		if (!/\.xlsx$/i.test(file.name)) {
+			$.messager.alert('Warning', 'Format file harus .xlsx', 'warning');
+			return;
+		}
+
+		var fd = new FormData();
+		fd.append('ordpk', '<?php echo $ord; ?>');
+		fd.append('uploadfile', file);
+
+		$.messager.progress({
+			title: '',
+			msg: 'Menyimpan data material...',
+			text: 'Loading...'
+		});
+		$.ajax({
+			type: "POST",
+			url: "action/simpan_import_material.php",
+			data: fd,
+			processData: false,
+			contentType: false,
+			dataType: "json",
+			success: function(res) {
+				$.messager.progress('close');
+				if (res.success) {
+					$('#dialog-impexcel').dialog('close');
+					$('#formimpexcel').form('clear');
+					$.messager.show({
+						title: '',
+						msg: "<div class='text-infohijau'>" + res.msg + " &nbsp; &#10004; </div>",
+						timeout: 3000,
+						showType: 'slide',
+						icon: 'info',
+						width: 252,
+						height: 55,
+						style: {
+							left: 0,
+							right: '',
+							top: '',
+							bottom: -document.body.scrollTop - document.documentElement.scrollTop
+						}
+					});
+					if (!$('#dg2').length) {
+						// order belum punya material, tabel belum dirender
+						setTimeout(function() { location.reload(); }, 1500);
+						return;
+					}
+					$('#dg2').datagrid('reload');
+					over1();
+					over2();
+					sumpo();
+					sumreq();
+					cost1();
+					cost2();
+				} else {
+					var msg = $('<div>').text(res.msg).html();
+					if (res.errors && res.errors.length) {
+						msg += '<div style="max-height:250px;overflow-y:auto;margin-top:8px;text-align:left;font-size:12px;">';
+						$.each(res.errors, function(i, e) {
+							msg += '<div style="padding:2px 0;">' + $('<div>').text(e).html() + '</div>';
+						});
+						msg += '</div>';
+					}
+					$.messager.alert({
+						title: 'Import gagal',
+						msg: msg,
+						icon: 'error',
+						width: res.errors && res.errors.length ? 560 : 360
+					});
+				}
+			},
+			error: function() {
+				$.messager.progress('close');
+				$.messager.alert('Error', 'Terjadi kesalahan saat upload, silakan coba lagi', 'error');
+			}
+		});
 	}
 
 	function importdata2() {
@@ -8005,8 +8170,14 @@ data: [
 {value:'SEWING',text:'SEWING'},
 {value:'FINISHING',text:'FINISHING'}
 ]">-->
-			<a href="javascript:void(0)" plain="true" onclick="importdata();"
-				style="font-weight:700; font-size:14px; color:#359DD9; text-decoration: none;"> Import Material </a>
+			<div class="dropdown-imp">
+				<button type="button" class="dropbtn-imp" onclick="toggleImport(this);">Import &#9660;</button>
+				<div class="dropdown-content-imp">
+					<a href="javascript:void(0);" onclick="$('.dropdown-content-imp').removeClass('show-imp'); importdata();">Import material order</a>
+					<hr style="border:1px solid #E0E0E0;margin:0;">
+					<a href="javascript:void(0);" onclick="importexcel();">Import excel material</a>
+				</div>
+			</div>
 			<!--<a href="javascript:void(0)" plain="true" onclick="prosespo1();" style="font-weight:700; font-size:14px; color:#359DD9; text-decoration: none;"> Process PO </a>-->
 
 			<!--<a href="javascript:void(0)" plain="true" onclick="prosespo();" style="font-weight:700; font-size:14px; color:#359DD9; text-decoration: none;"> Process PO </a>-->
@@ -8379,8 +8550,14 @@ data: [
 			onclick="create2b();">
 		<!-- </div> -->
 		<div style="text-align:left;top:210px;margin-left:15%;">
-			<a href="javascript:void(0)" plain="true" onclick="importdata();"
-				style="font-weight:700; font-size:14px; color:#359DD9; text-decoration: none;"> Import Material </a>
+			<div class="dropdown-imp">
+				<button type="button" class="dropbtn-imp" onclick="toggleImport(this);">Import &#9660;</button>
+				<div class="dropdown-content-imp">
+					<a href="javascript:void(0);" onclick="$('.dropdown-content-imp').removeClass('show-imp'); importdata();">Import material order</a>
+					<hr style="border:1px solid #E0E0E0;margin:0;">
+					<a href="javascript:void(0);" onclick="importexcel();">Import excel material</a>
+				</div>
+			</div>
 		</div>
 	</div>
 <?php } ?>
@@ -8437,8 +8614,40 @@ data: [
 
 
 
+<!-- DIALOG IMPORT EXCEL MATERIAL -->
+<div id="dialog-impexcel" class="easyui-dialog sticky" closed="true"
+	data-options="border:false,title:false,resizable:false,modal:true,closable:false"
+	style="width:525px;height:250px;padding:5px 5px;display:none;top:20%;border-radius:8px;">
+	<form id="formimpexcel" method="post" enctype="multipart/form-data">
+		<input type="hidden" name="ordpk" value="<?php echo $ord; ?>">
+		<div class="modal-content">
+			<div class="modal-header">
+				<div style="padding:10px;font-style: normal;font-weight: 700;font-size: 18px;line-height: 24px;">
+					Import excel material
+				</div>
+			</div>
+			<div class="border-modal" style="width:90%; height:auto;top:50px;">
+				<div style="padding:5px;">
+					<input name="uploadfile" id="uploadmatexcel" class="easyui-filebox" style="width:100%;"
+						data-options="buttonText:'Upload material excel file',buttonAlign:'left',accept:'.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'">
+				</div>
+			</div>
+			<div class="font-excel-template" style="width:auto; top:120px;">
+				<a href="excel/excel_template_material.php?ord=<?php echo $ord; ?>"
+					style="font-size:14px;line-height:18px;text-decoration:none;color:#359DD9;">
+					Download template upload material (.xlsx)</a><br>
+				<span style="color:red; font-style: italic; font-size:12px;line-height:16px;">(kolom dengan tanda * wajib diisi, kolom pilihan berupa dropdown)</span>
+			</div>
+			<a style="text-decoration:none; left: 250px; top: 200px;" href="javascript:void(0)"
+				class="button-cancel" onclick="cancelimportexcel();">Cancel</a>
+			<a style="text-decoration:none; left: 340px; top: 200px; width:150px;" href="javascript:void(0)"
+				class="button-submit" onclick="saveimportexcel();">Submit</a>
+		</div>
+	</form>
+</div>
+
 <!-- DIALOG FORM REQUEST PO -->
-<div id="dialog-formc" class="easyui-dialog sticky" closed="true" buttons="#dialog-buttons"
+<div id="dialog-formc"class="easyui-dialog sticky" closed="true" buttons="#dialog-buttons"
 	data-options="border:false,title:false,resizable:false,modal:true,closable:false"
 	style="width:350px;height:200px;padding:5px 5px;display:none;top:15px;border-radius:8px;">
 	<form id="formc" method="post">
@@ -9133,6 +9342,7 @@ data: [
 					<tr>
 						<th field="jenis" width="35" hidden="true">Jenis</th>
 						<th field="country" width="100">Place</th>
+						<th field="poref" width="100">License PO Ref</th>
 						<th field="pono" width="100">PO no.</th>
 						<th field="opno" width="100">OP no.</th>
 						<th field="style" width="100">Style</th>

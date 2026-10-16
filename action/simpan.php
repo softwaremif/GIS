@@ -7,7 +7,6 @@ include "../config/koneksi11u.php";
 include "../config/koneksi103a.php";
 include "../config/tanggal2.php";
 include "../config/ip.php";
-include "../config/log_bdown.php";
 
 $ip = ip();
 $browser = browser();
@@ -84,6 +83,13 @@ if ($_GET['x'] == "qty") {
     $gac2 = tgl2b($gac);
     $pcd2 = tgl2b($pcd);
 
+    // Tahun PCD / Ex Factory maksimal 2 tahun ke depan.
+    $tahunSalah = tahun_lewat_batas(['PCD' => $pcd, 'Ex Factory' => $gac]);
+    if ($tahunSalah) {
+        echo json_encode(array('success' => false, 'msg' => "<div class='text-infomerah' style='width:375px;'>Tahun " . implode(' & ', $tahunSalah) . " maksimal " . ((int) date('Y') + 2) . " &nbsp; &#x2573;</div>"));
+        exit;
+    }
+
     //opno
     $cro = mysqli_query($koneksi, "select * from ord where ordpk='$ordpk'");
     $dto = mysqli_fetch_array($cro);
@@ -96,10 +102,6 @@ if ($_GET['x'] == "qty") {
     $stsprod = $dto['stsprod'];
 
     $updt = mysqli_query($koneksi, "update ord set dateupdate=NOW() where ordpk='$ordpk'");
-
-    // Rekam PCD / Ex-Factory / total qty sebelum diubah, untuk dibandingkan
-    // sesudahnya. Lihat config/log_bdown.php.
-    $bdownSebelum = bdown_snapshot($koneksi, $ordpk, $bdownpk);
 
     $sql = "update bdown set
         country='$country2',
@@ -487,9 +489,6 @@ if ($_GET['x'] == "qty") {
         ordpk='$dt3[ordpk]',
         bdownpk='$bdownpk',
         sistem='$sistem'");
-
-    log_bdown_penting($koneksi, $ordpk, $bdownpk, $bdownSebelum, $userlog, $ip, $sistem);
-
     if ($stsprod == 1) {
         echo json_encode(array('success' => true, 'msg' => "<div class='text-infohijau' style='width:375px;'>Perubahan data diteruskan ke produksi &nbsp; &#10004; </div>"));
     } else {
@@ -567,9 +566,6 @@ if ($_GET['x'] == "replaceqty") {
 if ($_GET['x'] == "qty2") {
     $fu = $_SESSION['fu'];
     $ordpk = $_GET['ord'];
-
-    // Tambah baris PO mengubah total qty order — direkam untuk notifikasi schedule.
-    $totalSebelum = bdown_total_order($koneksi, $ordpk);
     $country = addslashes($_REQUEST['country']);
     $poref = $_REQUEST['poref'];
     $po = $_REQUEST['pono'];
@@ -628,6 +624,13 @@ if ($_GET['x'] == "qty2") {
 
     $gac2 = tgl2b($gac);
     $pcd2 = tgl2b($pcd);
+
+    // Tahun PCD / Ex Factory maksimal 2 tahun ke depan.
+    $tahunSalah = tahun_lewat_batas(['PCD' => $pcd, 'Ex Factory' => $gac]);
+    if ($tahunSalah) {
+        echo json_encode(array('success' => false, 'msg' => "<div class='text-infomerah' style='width:375px;'>Tahun " . implode(' & ', $tahunSalah) . " maksimal " . ((int) date('Y') + 2) . " &nbsp; &#x2573;</div>"));
+        exit;
+    }
     $sqln = mysqli_query($koneksi, "SELECT * FROM bdown WHERE ordpk='$ordpk' ORDER BY nour DESC LIMIT 1");
     $dtn = mysqli_fetch_array($sqln);
     $nour = $dtn['nour'] + 1;
@@ -963,8 +966,6 @@ if ($_GET['x'] == "qty2") {
                 lognote='$lognote',
                 ordpk='$ordpk',
                 sistem='$sistem'");
-
-    log_bdown_total($koneksi, $ordpk, 0, $totalSebelum, $userlog, $ip, $sistem);
     // echo json_encode(array('success' => true, 'msg' => "<div class='text-infohijau' style='width:285px;'>1 Row order breakdown added &nbsp; &#10004; </div>"));
     if ($stsprod == 1) {
         echo json_encode(array('success' => true, 'msg' => "<div class='text-infohijau' style='width:375px;'>Perubahan data diteruskan ke produksi &nbsp; &#10004; </div>"));
@@ -1027,82 +1028,92 @@ if ($_GET['x'] == "ord") {
         $fupk = $_SESSION['fu'];
     }
 
+    if($_POST['stage']=="CMT"){
+        $cmt=1;
+    } else {
+        $cmt=0;
+    }
+
     if ($dtcek > 0) {
         echo "<div class='text-infomerah' style='width:300px;'>Order number cannot be the same &nbsp; &#x2573; </div>";
     } else {
         if ($sspv == 1) {
             if ($dt2['datecreate'] > 0) {
                 $insert = mysqli_query($koneksi, "update ord set
-    ordno='$ordno',
-    artno='$_POST[artno]',
-    prodes='$prodes',
-    season='$season',
-    srno='$_POST[srno]',
-    byrpk='$_POST[byrpk]',
-    fupk='$fupk',
-    stage='$_POST[stage]',
-    deldate='$deldate',
-    dateupdate=NOW(),
-    statuspk='$_POST[statuspk]' where ordpk='$_POST[ordpk]'");
+                        ordno='$ordno',
+                        artno='$_POST[artno]',
+                        prodes='$prodes',
+                        season='$season',
+                        srno='$_POST[srno]',
+                        byrpk='$_POST[byrpk]',
+                        fupk='$fupk',
+                        stage='$_POST[stage]',
+                        deldate='$deldate',
+                        dateupdate=NOW(),
+                        statuspk='$_POST[statuspk]',
+                        cmt='$cmt' where ordpk='$_POST[ordpk]'");
             } else {
                 $insert = mysqli_query($koneksi, "update ord set
-    ordno='$ordno',
-    nourut='$ordno',
-    artno='$_POST[artno]',
-    prodes='$prodes',
-    season='$season',
-    srno='$_POST[srno]',
-    byrpk='$_POST[byrpk]',
-    fupk='$fupk',
-    stage='$_POST[stage]',
-    deldate='$deldate',
-    datecreate=NOW(),
-    dateupdate=NOW(),
-    statuspk='$_POST[statuspk]' where ordpk='$_POST[ordpk]'");
+                        ordno='$ordno',
+                        nourut='$ordno',
+                        artno='$_POST[artno]',
+                        prodes='$prodes',
+                        season='$season',
+                        srno='$_POST[srno]',
+                        byrpk='$_POST[byrpk]',
+                        fupk='$fupk',
+                        stage='$_POST[stage]',
+                        deldate='$deldate',
+                        datecreate=NOW(),
+                        dateupdate=NOW(),
+                        statuspk='$_POST[statuspk]',
+                        cmt='$cmt' where ordpk='$_POST[ordpk]'");
             }
         } else {
             if ($dt2['datecreate'] > 0) {
                 $insert = mysqli_query($koneksi, "update ord set
-    ordno='$ordno',
-    artno='$_POST[artno]',
-    prodes='$prodes',
-    season='$season',
-    srno='$_POST[srno]',
-    byrpk='$_POST[byrpk]',
-    fupk='$fupk',
-    userpk='$userpk',
-    stage='$_POST[stage]',
-    deldate='$deldate',
-    dateupdate=NOW(),
-    statuspk='$_POST[statuspk]' where ordpk='$_POST[ordpk]'");
+                        ordno='$ordno',
+                        artno='$_POST[artno]',
+                        prodes='$prodes',
+                        season='$season',
+                        srno='$_POST[srno]',
+                        byrpk='$_POST[byrpk]',
+                        fupk='$fupk',
+                        userpk='$userpk',
+                        stage='$_POST[stage]',
+                        deldate='$deldate',
+                        dateupdate=NOW(),
+                        statuspk='$_POST[statuspk]',
+                        cmt='$cmt' where ordpk='$_POST[ordpk]'");
             } else {
                 $insert = mysqli_query($koneksi, "update ord set
-    ordno='$ordno',
-    nourut='$ordno',
-    artno='$_POST[artno]',
-    prodes='$prodes',
-    season='$season',
-    srno='$_POST[srno]',
-    byrpk='$_POST[byrpk]',
-    fupk='$fupk',
-    userpk='$userpk',
-    stage='$_POST[stage]',
-    deldate='$deldate',
-    datecreate=NOW(),
-    dateupdate=NOW(),
-    statuspk='$_POST[statuspk]' where ordpk='$_POST[ordpk]'");
+                        ordno='$ordno',
+                        nourut='$ordno',
+                        artno='$_POST[artno]',
+                        prodes='$prodes',
+                        season='$season',
+                        srno='$_POST[srno]',
+                        byrpk='$_POST[byrpk]',
+                        fupk='$fupk',
+                        userpk='$userpk',
+                        stage='$_POST[stage]',
+                        deldate='$deldate',
+                        datecreate=NOW(),
+                        dateupdate=NOW(),
+                        statuspk='$_POST[statuspk]',
+                        cmt='$cmt' where ordpk='$_POST[ordpk]'");
             }
         }
 
         $lognote = "User " . $userlog . " edit data order " . $_POST['ordno'];
         $insert2 = mysqli_query($koneksi, "insert into logtran set
-    logdtime=NOW(),
-    logdate=NOW(),
-    logtime=NOW(),
-    logip='$ip',
-    lognote='$lognote',
-    ordpk='$_POST[ordpk]',
-    sistem='$sistem'");
+                logdtime=NOW(),
+                logdate=NOW(),
+                logtime=NOW(),
+                logip='$ip',
+                lognote='$lognote',
+                ordpk='$_POST[ordpk]',
+                sistem='$sistem'");
 
         if ($dt2['statuspk'] <> $_POST['statuspk']) {
             if ($_POST['matadd'] == 1) {
@@ -1177,38 +1188,38 @@ if ($_GET['x'] == "ord") {
 
                     $nour1++;
                     $insertmat = mysqli_query($koneksi, "insert into rkb set
-    ordpk='$_POST[ordpk]',
-    matpk='$dt3[matpk]',
-    nour='$nour1',
-    suppk='$suppk',
-    hari1=NOW(),
-    tspec='$tspec',
-    nspec='$nspec',
-    item='$matnm',
-    colname='$dt3[color]',
-    spec='$dt3[spec]',
-    colcode='$dt3[colcode]',
-    bdownqty='$dt3[qty]',
-    price='$dt3[price]',
-    curpk='$dt3[curpk]',
-    sizegar='$dt3[size]',
-    unit='$dt3[unit]',
-    kelnm='$kelnm',
-    mtypepk='$dt3[mtypepk]',
-    codenm='$itemcode',
-    itemadd='$dt3[garmentcw]',
-    specadd='$dt3[placement]',
-    matusage='$dt3[matusage]',
-    hspec1='$hspec1',
-    hspec2='$hspec2',
-    hspec3='$hspec3',
-    hspec4='$hspec4',
-    hspec5='$hspec5',
-    spec1='$spec1',
-    spec2='$spec2',
-    spec3='$spec3',
-    spec4='$spec4',
-    spec5='$spec5'");
+                                ordpk='$_POST[ordpk]',
+                                matpk='$dt3[matpk]',
+                                nour='$nour1',
+                                suppk='$suppk',
+                                hari1=NOW(),
+                                tspec='$tspec',
+                                nspec='$nspec',
+                                item='$matnm',
+                                colname='$dt3[color]',
+                                spec='$dt3[spec]',
+                                colcode='$dt3[colcode]',
+                                bdownqty='$dt3[qty]',
+                                price='$dt3[price]',
+                                curpk='$dt3[curpk]',
+                                sizegar='$dt3[size]',
+                                unit='$dt3[unit]',
+                                kelnm='$kelnm',
+                                mtypepk='$dt3[mtypepk]',
+                                codenm='$itemcode',
+                                itemadd='$dt3[garmentcw]',
+                                specadd='$dt3[placement]',
+                                matusage='$dt3[matusage]',
+                                hspec1='$hspec1',
+                                hspec2='$hspec2',
+                                hspec3='$hspec3',
+                                hspec4='$hspec4',
+                                hspec5='$hspec5',
+                                spec1='$spec1',
+                                spec2='$spec2',
+                                spec3='$spec3',
+                                spec4='$spec4',
+                                spec5='$spec5'");
                 }
             }
         }
@@ -1251,92 +1262,93 @@ if ($_GET['x'] == "ord") {
 
                 if ($sspv == 1) {
                     $insert = mysqli_query($koneksi, "insert into ord set
-            ordpk='$ordpkpp',
-            ordno='$ordnop',
-            nourut='$ordnop',
-            prodes='$prodes',
-            season='$season',
-            srno='$_POST[srno]',
-            artno='$_POST[artno]',
-            byrpk='$_POST[byrpk]',
-            fupk='$_SESSION[fu]',
-            deldate='$deldate',
-            stage='$_POST[stage]',
-            datecreate=NOW(),
-            dateupdate=NOW(),
-            foto='$dt2[foto]',
-            foto2='$dt2[foto2]',
-            stsfoto='$dt2[stsfoto]',
-            statuspk='$dt2[statuspk]'");
+                            ordpk='$ordpkpp',
+                            ordno='$ordnop',
+                            nourut='$ordnop',
+                            prodes='$prodes',
+                            season='$season',
+                            srno='$_POST[srno]',
+                            artno='$_POST[artno]',
+                            byrpk='$_POST[byrpk]',
+                            fupk='$_SESSION[fu]',
+                            deldate='$deldate',
+                            stage='$_POST[stage]',
+                            datecreate=NOW(),
+                            dateupdate=NOW(),
+                            foto='$dt2[foto]',
+                            foto2='$dt2[foto2]',
+                            stsfoto='$dt2[stsfoto]',
+                            statuspk='$dt2[statuspk]',
+                            cmt='$cmt'");
                 } else {
                     $insert = mysqli_query($koneksi, "insert into ord set
-            ordpk='$ordpkpp',
-            ordno='$ordnop',
-            nourut='$ordnop',
-            prodes='$prodes',
-            season='$season',
-            srno='$_POST[srno]',
-            artno='$_POST[artno]',
-            byrpk='$_POST[byrpk]',
-            fupk='$_SESSION[fu]',
-            userpk='$userpk',
-            deldate='$deldate',
-            stage='$_POST[stage]',
-            datecreate=NOW(),
-            dateupdate=NOW(),
-            foto='$dt2[foto]',
-            foto2='$dt2[foto2]',
-            stsfoto='$dt2[stsfoto]',
-            statuspk='$dt2[statuspk]'");
+                            ordpk='$ordpkpp',
+                            ordno='$ordnop',
+                            nourut='$ordnop',
+                            prodes='$prodes',
+                            season='$season',
+                            srno='$_POST[srno]',
+                            artno='$_POST[artno]',
+                            byrpk='$_POST[byrpk]',
+                            fupk='$_SESSION[fu]',
+                            userpk='$userpk',
+                            deldate='$deldate',
+                            stage='$_POST[stage]',
+                            datecreate=NOW(),
+                            dateupdate=NOW(),
+                            foto='$dt2[foto]',
+                            foto2='$dt2[foto2]',
+                            stsfoto='$dt2[stsfoto]',
+                            statuspk='$dt2[statuspk]',
+                            cmt='$cmt'");
                 }
 
                 $lognote = "User " . $userlog . " tambah data order " . $_POST['ordno'];
                 $insert2 = mysqli_query($koneksi, "insert into logtran set
-            logdtime=NOW(),
-            logdate=NOW(),
-            logtime=NOW(),
-            logip='$ip',
-            lognote='$lognote',
-            ordpk='$_POST[ordpk]',
-            sistem='$sistem'");
+                        logdtime=NOW(),
+                        logdate=NOW(),
+                        logtime=NOW(),
+                        logip='$ip',
+                        lognote='$lognote',
+                        ordpk='$_POST[ordpk]',
+                        sistem='$sistem'");
 
                 if ($_POST['matadd'] == 1) {
-                    $crm2 = mysqli_query($koneksi, "select * from rkb where ordpk='$_POST[ordpk]' and matpk>0 and hari1='$date' 
-            order by rkbpk asc");
+                    $crm2 = mysqli_query($koneksi, "select * from rkb where ordpk='$_POST[ordpk]' and matpk>0 and hari1='$date' order by rkbpk asc");
                     while ($dtm2 = mysqli_fetch_array($crm2)) {
                         $insertmat = mysqli_query($koneksi, "insert into rkb set
-                ordpk='$ordpkpp',
-                matpk='$dtm2[matpk]',
-                nour='$dtm2[nour]',
-                suppk='$dtm2[suppk]',
-                hari1=NOW(),
-                tspec='$dtm2[tspec]',
-                nspec='$dtm2[nspec]',
-                item='$dtm2[item]',
-                colname='$dtm2[colname]',
-                spec='$dtm2[spec]',
-                colcode='$dtm2[colcode]',
-                bdownqty='$dtm2[bdownqty]',
-                price='$dtm2[price]',
-                curpk='$dtm2[curpk]',
-                sizegar='$dtm2[sizegar]',
-                unit='$dtm2[unit]',
-                kelnm='$dtm2[kelnm]',
-                mtypepk='$dtm2[mtypepk]',
-                codenm='$dtm2[codenm]',
-                itemadd='$dtm2[garmentcw]',
-                specadd='$dtm2[placement]',
-                matusage='$dtm2[matusage]',
-                hspec1='$dtm2[hspec1]',
-                hspec2='$dtm2[hspec2]',
-                hspec3='$dtm2[hspec3]',
-                hspec4='$dtm2[hspec4]',
-                hspec5='$dtm2[hspec5]',
-                spec1='$dtm2[spec1]',
-                spec2='$dtm2[spec2]',
-                spec3='$dtm2[spec3]',
-                spec4='$dtm2[spec4]',
-                spec5='$dtm2[spec5]'");
+                                    ordpk='$ordpkpp',
+                                    matpk='$dtm2[matpk]',
+                                    nour='$dtm2[nour]',
+                                    suppk='$dtm2[suppk]',
+                                    hari1=NOW(),
+                                    tspec='$dtm2[tspec]',
+                                    nspec='$dtm2[nspec]',
+                                    item='$dtm2[item]',
+                                    colname='$dtm2[colname]',
+                                    spec='$dtm2[spec]',
+                                    colcode='$dtm2[colcode]',
+                                    bdownqty='$dtm2[bdownqty]',
+                                    price='$dtm2[price]',
+                                    curpk='$dtm2[curpk]',
+                                    sizegar='$dtm2[sizegar]',
+                                    unit='$dtm2[unit]',
+                                    kelnm='$dtm2[kelnm]',
+                                    mtypepk='$dtm2[mtypepk]',
+                                    codenm='$dtm2[codenm]',
+                                    itemadd='$dtm2[garmentcw]',
+                                    specadd='$dtm2[placement]',
+                                    matusage='$dtm2[matusage]',
+                                    hspec1='$dtm2[hspec1]',
+                                    hspec2='$dtm2[hspec2]',
+                                    hspec3='$dtm2[hspec3]',
+                                    hspec4='$dtm2[hspec4]',
+                                    hspec5='$dtm2[hspec5]',
+                                    spec1='$dtm2[spec1]',
+                                    spec2='$dtm2[spec2]',
+                                    spec3='$dtm2[spec3]',
+                                    spec4='$dtm2[spec4]',
+                                    spec5='$dtm2[spec5]'");
                     }
                 }
             }

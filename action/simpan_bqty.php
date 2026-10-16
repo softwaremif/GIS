@@ -6,6 +6,7 @@ include "../config/koneksi11a.php";
 include "../config/koneksi103a.php";
 require "../config/vendor/autoload.php";
 include "../config/ip.php";
+include "../config/tanggal_excel.php";
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Reader\Csv;
@@ -46,7 +47,17 @@ if (isset($_FILES['uploadfile']['name']) && in_array($_FILES['uploadfile']['type
         $reader->setReadDataOnly(true);
         $spreadsheet = $reader->load($_FILES['uploadfile']['tmp_name']);
         $sheetData = $spreadsheet->getActiveSheet()->toArray();
-        for ($i = 1; $i < count($sheetData); $i++) {
+
+        // Validasi tahun PCD / Ex Factory sebelum ada baris yang disimpan.
+        $errTahun = validasi_tahun_upload($sheetData, 1, [10 => 'PCD', 11 => 'Ex Factory'], function ($baris) {
+                return in_array(trim((string) ($baris[2] ?? '')), ['HEADER', 'SIZE']);
+        });
+        if ($errTahun !== null) {
+                echo $errTahun;
+                exit;
+        }
+
+        for ($i = 1;$i < count($sheetData); $i++) {
                 $no  = $sheetData[$i]['0'];
                 $bdownpk1 = $sheetData[$i]['1'];
                 $country1 = $sheetData[$i]['2'];
@@ -57,8 +68,11 @@ if (isset($_FILES['uploadfile']['name']) && in_array($_FILES['uploadfile']['type
                 $color1 = $sheetData[$i]['7'];
                 $fob   = $sheetData[$i]['8'];
                 $ddp = $sheetData[$i]['9'];
-                $pcd1 = $sheetData[$i]['10'];
-                $gac1 = $sheetData[$i]['11'];
+                /* Serial Excel -> Y-m-d, dipakai TANPA kutip di query karena kolom
+                   gac/pcd di bdown bertipe DATE; sel kosong jadi NULL, bukan
+                   '0000-00-00'. Lihat config/tanggal_excel.php. */
+                $pcd1 = tanggal_sql($sheetData[$i]['10']);
+                $gac1 = tanggal_sql($sheetData[$i]['11']);
                 $secsz = $sheetData[$i]['12'];
 
                 $s1 = $sheetData[$i]['13'];
@@ -174,8 +188,8 @@ if (isset($_FILES['uploadfile']['name']) && in_array($_FILES['uploadfile']['type
                                                 style='$style',
                                                 color='$color',
                                                 FOB='$fob',
-                                                gac='$gac1',
-                                                pcd='$pcd1',
+                                                gac=$gac1,
+                                                pcd=$pcd1,
                                                 DDP='$ddp',
                                                 secsz='$secsz',
                                                 s1='$s1',
@@ -413,8 +427,8 @@ if (isset($_FILES['uploadfile']['name']) && in_array($_FILES['uploadfile']['type
                                         style='$style',
                                         color='$color',
                                         FOB='$fob',
-                                        gac='$gac1',
-                                        pcd='$pcd1',
+                                        gac=$gac1,
+                                        pcd=$pcd1,
                                         DDP='$ddp',
                                         secsz='$secsz',
                                         s1='$s1',
