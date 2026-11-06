@@ -755,6 +755,19 @@
 				if (row) {
 					$('#dialog-form').dialog('open').dialog('setTitle', '');
 					$('#form').form('load', row);
+					// Order yang sudah release ke produksi tidak boleh replace data
+					$.ajax({
+						type: "POST",
+						url: "view/get_dataord.php?x=ord&ordpk=" + row.ordpk,
+						dataType: "json",
+						success: function(data) {
+							var opsi = [{value: '1', text: 'Tambahkan data baru yang saya upload kepada order.'}];
+							if (data.stsprod != 1) {
+								opsi.push({value: '2', text: 'Replace data yang ada di order dengan data baru yang saya upload.'});
+							}
+							$('#typeupload1').combobox('loadData', opsi).combobox('setValue', '1');
+						},
+					});
 				} else {
 					$.messager.alert('Warning', 'No order data selected', 'warning');
 				}
@@ -3818,7 +3831,7 @@ rownumbers="false"  multiple="true" collapsible="false" fitColumns="false" metho
 					</span>
 					<br><br>
 					<div style="font-size:14px;line-height:24px;text-decoration:none;color:#000000;">Apa yang ingin anda lakukan?<br>
-						<select class="easyui-combobox" style="width:460px; height:28px;" name="typeupload" id="typeupload"
+						<select class="easyui-combobox" style="width:460px; height:28px;" name="typeupload" id="typeupload1"
 							data-options="panelHeight:'auto'">
 							<option value="1">Tambahkan data baru yang saya upload kepada order.</option>
 							<option value="2">Replace data yang ada di order dengan data baru yang saya upload.</option>

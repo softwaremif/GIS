@@ -1871,6 +1871,19 @@
 				document.getElementById('filenm2').innerHTML = filenm;
 			},
 		});
+		// Order yang sudah release ke produksi tidak boleh replace data
+		$.ajax({
+			type: "POST",
+			url: "view/get_dataord.php?x=ord&ordpk=<?php echo $_GET['ord']; ?>",
+			dataType: "json",
+			success: function(data) {
+				var opsi = [{value: '1', text: 'Tambahkan data baru yang saya upload kepada order.'}];
+				if (data.stsprod != 1) {
+					opsi.push({value: '2', text: 'Replace data yang ada di order dengan data baru yang saya upload.'});
+				}
+				$('#typeupload2').combobox('loadData', opsi).combobox('setValue', '1');
+			},
+		});
 		$('#dialog-form2').dialog('open').dialog('setTitle', '');
 	}
 
